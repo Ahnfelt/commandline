@@ -35,7 +35,22 @@ The `branch` is used to branch on subcommands, eg. `commit` in `git commit`.
 val result = commandLine.parseOrExit(args)
 ```
 
-Note that `result` is your own case class, in this case `Arguments`, which is defined later in this document.
+Note that `result` is your own case class, in this case `Arguments`, which is defined in the following section.
+
+# Parse into your own data structures
+```scala
+sealed abstract class Mode
+case class RunMode(path : Option[String], verbose : Boolean, recursive : Boolean, files : List[String]) extends Mode
+case class ReportMode(file : String, port : Long) extends Mode
+
+case class Arguments(
+    number : Option[Long],
+    entityType : Option[Boolean],
+    mode : Mode
+)
+```
+
+# Printing out USAGE style help
 
 When using parseOrExit, `-?` prints usage:
 ```
@@ -74,18 +89,6 @@ Use `-*` to print flags, options and commands, suitable for bash completion via 
 --count --entitytype --file --path --port --recursive --verbose -n -p -r -t -v report run
 ```
 
-# Parse into your own data structures
-```scala
-sealed abstract class Mode
-case class RunMode(path : Option[String], verbose : Boolean, recursive : Boolean, files : List[String]) extends Mode
-case class ReportMode(file : String, port : Long) extends Mode
-
-case class Arguments(
-    number : Option[Long],
-    entityType : Option[Boolean],
-    mode : Mode
-)
-```
 
 # Define your own argument parsers
 ```scala
