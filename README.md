@@ -26,7 +26,7 @@ val commandLine = CommandLine("A tool with command line parameters.",
 )(Arguments)
 ```
 
-The line `optional(EntityTypeParser, "-t", "--entitytype", "ENTITYTYPE")` uses a custom argument parser `EntityTypeParser`. It's optional, and the argument is given as `-t ...`, `--entitytype ...` or as a fallback, the environment variable `ENTITY_TYPE`.
+The line `optional(EntityTypeParser, "-t", "--entitytype", "ENTITYTYPE")` uses a custom argument parser `EntityTypeParser`. It's optional, and the argument is given as `-t ...`, `--entitytype ...` or as a fallback, the value of the environment variable `ENTITYTYPE`.
 
 The `branch` is used to branch on subcommands, eg. `commit` in `git commit`.
 
