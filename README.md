@@ -1,6 +1,11 @@
 # commandline
 A command line parser for Scala that follows [POSIX and GNU conventions](https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html). No dependencies, no macros and no implicits.
 
+```
+resolvers += Resolver.sonatypeRepo("snapshots")
+libraryDependencies += "com.github.ahnfelt" %%% "commandline" % "0.2-SNAPSHOT"
+```
+
 # Declaring the command line
 ```scala
 val commandLine = CommandLine("A tool to process files.",
