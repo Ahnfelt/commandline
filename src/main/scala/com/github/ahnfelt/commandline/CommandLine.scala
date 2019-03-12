@@ -314,6 +314,19 @@ case class BranchParameter[T](branches : List[(String, CommandLine[T])]) extends
         throw CommandLineException("Missing command: " + branches.map(_._1).mkString(", "))
 }
 
+object Parser {
+    def apply[T](formatHint : String, parser : String => T) : Parser[T] = new Parser[T] {
+        override val format = formatHint
+        override def parse(argument : String) =
+            try {
+                parser(argument)
+            } catch {
+                case e : CommandLineException => throw e
+                case e : Exception => throw CommandLineException(e.getMessage)
+            }
+    }
+}
+
 trait Parser[T] {
     def format : String
     def parse(argument : String) : T

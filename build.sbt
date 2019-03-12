@@ -1,6 +1,6 @@
 name := "commandline"
 organization := "com.github.ahnfelt"
-version := "0.2-SNAPSHOT"
+version := "0.3-SNAPSHOT"
 scalaVersion := "2.12.4"
 
 

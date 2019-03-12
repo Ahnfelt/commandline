@@ -3,7 +3,7 @@ A command line parser for Scala that follows [POSIX and GNU conventions](https:/
 
 ```
 resolvers += Resolver.sonatypeRepo("snapshots")
-libraryDependencies += "com.github.ahnfelt" %% "commandline" % "0.2-SNAPSHOT"
+libraryDependencies += "com.github.ahnfelt" %% "commandline" % "0.3-SNAPSHOT"
 ```
 
 # Declaring the command line
@@ -84,7 +84,7 @@ object EntityTypeParser extends Parser[Boolean] {
 }
 ```
 
-# Posix and GNU compatibility
+# POSIX and GNU compatibility
 Support for `-xyz`, equivalent to `-x -y -z`.
 
 Support for `-n10`, equivalent to `-n 10`.
