@@ -29,7 +29,7 @@ object CommandLineExample {
         branch[Mode](
             "run" -> CommandLine("Run scripts.",
                 optional(StringParser, "-p", "--path"),
-                flag("-v", "--verbose"),
+                flag("-v", "--verbose", "VERBOSE"),
                 flag("-r", "--recursive"),
                 requiredList(StringParser, "file"),
             )(RunMode),
@@ -143,8 +143,8 @@ trait CommandLine[T] { self =>
             }
         } catch {
             case e : CommandLineException =>
-                System.err.println("ERROR: (get help: -?)")
-                System.err.println("    " + e.getMessage)
+                System.err.println(e.getMessage)
+                System.err.println("Rerun with -? to print usage information.")
                 System.exit(errorExitCode)
                 throw CommandLineException("This never happens.")
         }
@@ -210,7 +210,7 @@ case class RequiredParameter[T](parser : Parser[T], labelList : List[String]) ex
             case l if environment.contains(l) =>
                 parser.parse(environment(l))
         }.getOrElse {
-            throw CommandLineException("Missing parameter: " + usage(0))
+            throw CommandLineException("Missing parameter: " + usage(0).trim)
         }
     }
 
@@ -248,7 +248,13 @@ case class FlagParameter(labelList : List[String]) extends Parameter[Boolean] {
         true -> arguments.drop(1)
     }
     override def missing(environment : Map[String, String]) = {
-        labelList.filter(_.headOption.exists(_.isUpper)).exists { environment.contains }
+        labelList.filter(_.headOption.exists(_.isUpper)).find(environment.contains).map { name =>
+            environment(name).toLowerCase match {
+                case "true" | "t" | "yes" | "y" | "1" => true
+                case "false" | "f" | "no" | "n" | "0" | "" => false
+                case v => throw CommandLineException("Can't parse as boolean " + name + ": " + v)
+            }
+        }.getOrElse(false)
     }
 }
 
@@ -277,7 +283,7 @@ case class RequiredValueParameter[T](parser : Parser[T], name : String) extends 
         parser.parse(arguments.head) -> arguments.tail
     }
     override def missing(environment : Map[String, String]) =
-        throw CommandLineException("Missing value: " + usage(0))
+        throw CommandLineException("Missing value: " + usage(0).trim)
 }
 
 case class MultiValueParameter[T](parser : Parser[T], name : String, nonEmpty : Boolean) extends Parameter[List[T]] {
@@ -298,7 +304,7 @@ case class MultiValueParameter[T](parser : Parser[T], name : String, nonEmpty : 
         result.reverse -> remaining
     }
     override def missing(environment : Map[String, String]) =
-        throw CommandLineException("Missing value: " + usage(0))
+        throw CommandLineException("Missing value: " + usage(0).trim)
 }
 
 case class BranchParameter[T](branches : List[(String, CommandLine[T])]) extends Parameter[T] {

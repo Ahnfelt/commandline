@@ -3,7 +3,7 @@ A command line parser for Scala that follows [POSIX and GNU conventions](https:/
 
 ```
 resolvers += Resolver.sonatypeRepo("snapshots")
-libraryDependencies += "com.github.ahnfelt" %% "commandline" % "0.3-SNAPSHOT"
+libraryDependencies += "com.github.ahnfelt" %% "commandline" % "0.4-SNAPSHOT"
 ```
 
 # Declaring the command line
@@ -38,6 +38,9 @@ val result = commandLine.parseOrExit(args)
 Note that `result` is your own case class, in this case `Arguments`, which is defined in the following section.
 
 # Parse into your own data structures
+
+The `commandLine.parseOrExit(args)` returns your own data structure, eg:
+
 ```scala
 sealed abstract class Mode
 case class RunMode(path : Option[String], verbose : Boolean, recursive : Boolean, files : List[String]) extends Mode
@@ -111,6 +114,3 @@ Support for `--foo=bar`, equivalent to `--foo bar`.
 After a lone `--`, everything is treated as positional arguments.
 
 A lone `-` is treated as a positional argument.
-
-# To be implemented
-Currently, environment variables for flags is treated as `true` when defined and `false` otherwise. Perhaps the value should be parsed as a boolean value, ie. `""`, `false`, `no`, `n` or `0` for false and `true`, `yes`, `y` or `1` for true.
