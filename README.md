@@ -1,5 +1,5 @@
 # commandline
-A command line parser for Scala that follows POSIX and GNU conventions. No dependencies, no macros and no implicits.
+A command line parser for Scala that follows [POSIX and GNU conventions](https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html). No dependencies, no macros and no implicits.
 
 # Declaring the command line
 ```scala
@@ -19,6 +19,10 @@ val commandLine = CommandLine("A tool to process files.",
     )
 )(Arguments)
 ```
+
+The line `optional(EntityTypeParser, "-t", "--entitytype", "ENTITY_TYPE")` uses a custom argument parser `EntityTypeParser`. It's optional, and the argument is given as `-t ...`, `--entitytype ...` or as a fallback, the environment variable `ENTITY_TYPE`.
+
+The `branch` is used to branch on subcommands, eg. `commit` in `git commit`.
 
 # Parsing the command line
 ```scala
