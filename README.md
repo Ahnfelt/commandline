@@ -8,11 +8,12 @@ libraryDependencies += "com.github.ahnfelt" %% "commandline" % "0.3-SNAPSHOT"
 
 # Declaring the command line
 ```scala
-val commandLine = CommandLine("A tool to process files.",
-    optional(LongParser, "-e", "--enhedsnummer"),
-    optional(EntityTypeParser, "-t", "--entitytype", "ENTITY_TYPE"),
-    branch(
+val commandLine = CommandLine("A tool with command line parameters.",
+    optional(LongParser, "-n", "--count"),
+    optional(EntityTypeParser, "-t", "--entitytype", "ENTITYTYPE"),
+    branch[Mode](
         "run" -> CommandLine("Run scripts.",
+            optional(StringParser, "-p", "--path"),
             flag("-v", "--verbose"),
             flag("-r", "--recursive"),
             requiredList(StringParser, "file"),
@@ -38,22 +39,37 @@ Note that `result` is your own case class, in this case `Arguments`, which is de
 
 When using parseOrExit, `-?` prints usage:
 ```
-USAGE: (get help: -?)
-    A tool to process files.
-    -e, --enhedsnummer <integer>
-    -t, --entitytype, ENTITY_TYPE {Person, Organization}
-    run:
-        Run scripts.
-        -v, --verbose
-        -r, --recursive
-        file [...] <string>
-    report:
-        Report progress.
-        --file <string> (required)
-        --port <integer> (required)
+Process files.
+
+-n, --number <integer>
+
+-t, --entitytype, ENTITYTYPE <type>
+
+run:
+    Run scripts.
+
+    -p, --path <string>
+
+    -v, --verbose
+
+    -r, --recursive
+
+    file [...]
+
+report:
+    Report progress.
+
+    --file <string> (required)
+
+    --port <integer> (required)
+
+In addition, -? prints this information and -* prints a list of keywords
+suitable for bash completion, eg. complete -D -W "..." mycommand.
 ```
 
 Work is ongoing to make the above prettier. Perhaps generation of man pages will be added eventually.
+
+# Bash completion for your command line
 
 Use `-*` to print flags, options and commands, suitable for bash completion via `complete -D -W "..." mycommand`:
 ```
@@ -63,11 +79,11 @@ Use `-*` to print flags, options and commands, suitable for bash completion via 
 # Parse into your own data structures
 ```scala
 sealed abstract class Mode
-case class RunMode(verbose : Boolean, recursive : Boolean, files : List[String]) extends Mode
+case class RunMode(path : Option[String], verbose : Boolean, recursive : Boolean, files : List[String]) extends Mode
 case class ReportMode(file : String, port : Long) extends Mode
 
 case class Arguments(
-    enhedsnummer : Option[Long],
+    number : Option[Long],
     entityType : Option[Boolean],
     mode : Mode
 )
@@ -80,7 +96,7 @@ object EntityTypeParser extends Parser[Boolean] {
         if(v == "Person") true
         else if(v == "Organization") false
         else throw CommandLineException("Expected " + format + ", got " + v)
-    override def format = "{Person, Organization}"
+    override def format = "<type>"
 }
 ```
 

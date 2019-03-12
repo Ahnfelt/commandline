@@ -10,7 +10,7 @@ object CommandLineExample {
     case class ReportMode(file : String, port : Long) extends Mode
 
     case class Arguments(
-        enhedsnummer : Option[Long],
+        number : Option[Long],
         entityType : Option[Boolean],
         mode : Mode
     )
@@ -24,12 +24,12 @@ object CommandLineExample {
     }
 
     val commandLine = CommandLine("Process files.",
-        optional(LongParser, "-e", "--enhedsnummer"),
+        optional(LongParser, "-n", "--number"),
         optional(EntityTypeParser, "-t", "--entitytype", "ENTITYTYPE"),
         branch[Mode](
             "run" -> CommandLine("Run scripts.",
                 optional(StringParser, "-p", "--path"),
-                flag("-v", "--verbose").help("It's a lot of spam, really."),
+                flag("-v", "--verbose"),
                 flag("-r", "--recursive"),
                 requiredList(StringParser, "file"),
             )(RunMode),
