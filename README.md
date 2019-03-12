@@ -29,6 +29,8 @@ The `branch` is used to branch on subcommands, eg. `commit` in `git commit`.
 val result = commandLine.parseOrExit(args)
 ```
 
+Note that `result` is your own case class, in this case `Arguments`, which is defined later in this document.
+
 When using parseOrExit, `-?` prints usage:
 ```
 USAGE: (get help: -?)
