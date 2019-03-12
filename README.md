@@ -87,6 +87,8 @@ object EntityTypeParser extends Parser[Boolean] {
 # Posix and GNU compatibility
 Combined short names `-xyz` is equivalent to `-x -y -z`.
 
+For long names, `=` can be used between the option and the argument, eg. `--foo=bar`.
+
 After `--`, everything is treated as positional arguments.
 
 A lone `-` is treated as a positional argument.
