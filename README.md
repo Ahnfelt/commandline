@@ -48,7 +48,9 @@ USAGE: (get help: -?)
         --port <integer> (required)
 ```
 
-And `-*` prints flags, options and commands, suitable for bash completion via `complete -D -W "..." mycommand`:
+Work is ongoing to make the above prettier. Perhaps generation of man pages will be added eventually.
+
+Use `-*` to print flags, options and commands, suitable for bash completion via `complete -D -W "..." mycommand`:
 ```
 --enhedsnummer --entitytype --file --port --recursive --verbose -e -r -t -v report run
 ```
@@ -77,9 +79,10 @@ object EntityTypeParser extends Parser[Boolean] {
 }
 ```
 
+# Posix and GNU compatibility
+
+
 # To be implemented
 In POSIX, it's possible to give arguments to short options without a separating space, eg. `-n10`. This remains to be implemented.
 
-Currently, environment variables for flags is treated as `true` when defined and `false` otherwise. Perhaps the value should be parsed as a boolean value, ie. "", "false", "no", "n" or "0" for false and "true", "yes", "y" or "1" for true.
-
-It would also be nice with an even prettier USAGE text, and man page generation.
+Currently, environment variables for flags is treated as `true` when defined and `false` otherwise. Perhaps the value should be parsed as a boolean value, ie. ``, `false`, `no`, `n` or `0` for false and `true`, `yes`, `y` or `1` for true.
