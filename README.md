@@ -3,7 +3,7 @@ A command line parser for Scala that follows [POSIX and GNU conventions](https:/
 
 ```
 resolvers += Resolver.sonatypeRepo("snapshots")
-libraryDependencies += "com.github.ahnfelt" %%% "commandline" % "0.2-SNAPSHOT"
+libraryDependencies += "com.github.ahnfelt" %% "commandline" % "0.2-SNAPSHOT"
 ```
 
 # Declaring the command line
