@@ -322,7 +322,7 @@ object Parser {
                 parser(argument)
             } catch {
                 case e : CommandLineException => throw e
-                case e : Exception => throw CommandLineException(e.getMessage)
+                case e : Exception => throw CommandLineException(e.getMessage).initCause(e)
             }
     }
 }
