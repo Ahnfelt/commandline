@@ -46,7 +46,7 @@ USAGE: (get help: -?)
         --port <integer> (required)
 ```
 
-And `-*` prints flags, options and commands, suitable for bash completion via `complete -W "..." mycommand`:
+And `-*` prints flags, options and commands, suitable for bash completion via `complete -D -W "..." mycommand`:
 ```
 --enhedsnummer --entitytype --file --port --recursive --verbose -e -r -t -v report run
 ```
