@@ -248,13 +248,13 @@ case class FlagParameter(labelList : List[String]) extends Parameter[Boolean] {
         true -> arguments.drop(1)
     }
     override def missing(environment : Map[String, String]) = {
-        labelList.filter(_.headOption.exists(_.isUpper)).find(environment.contains).map { name =>
+        labelList.filter(_.headOption.exists(_.isUpper)).find(environment.contains).exists { name =>
             environment(name).toLowerCase match {
                 case "true" | "t" | "yes" | "y" | "1" => true
                 case "false" | "f" | "no" | "n" | "0" | "" => false
                 case v => throw CommandLineException("Can't parse as boolean " + name + ": " + v)
             }
-        }.getOrElse(false)
+        }
     }
 }
 

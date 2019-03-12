@@ -114,3 +114,11 @@ Support for `--foo=bar`, equivalent to `--foo bar`.
 After a lone `--`, everything is treated as positional arguments.
 
 A lone `-` is treated as a positional argument.
+
+# Environment variables and flags
+When using environment variables for flags, the following values
+are accepted (in both upper, lower and mixed case):
+
+ * `"true"`, `"t"`, `"yes"`, `"y"` and `"1"` is considered true.
+ * `"false"`, `"f"`, `"no"`, `"n"`, `"0"` and `""` is considered false.
+ * All other values cause an error.
