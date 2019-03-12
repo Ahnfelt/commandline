@@ -78,4 +78,6 @@ object EntityTypeParser extends Parser[Boolean] {
 # To be implemented
 In POSIX, it's possible to give arguments to short options without a separating space, eg. `-n10`. This remains to be implemented.
 
+Currently, environment variables for flags is treated as `true` when defined and `false` otherwise. Perhaps the value should be parsed as a boolean value, ie. "", "false", "no", "n" or "0" for false and "true", "yes", "y" or "1" for true.
+
 It would also be nice with an even prettier USAGE text, and man page generation.
