@@ -34,4 +34,9 @@ pomExtra :=
                 <name>Joakim Ahnfelt-Rønne</name>
                 <url>https://github.com/Ahnfelt</url>
             </developer>
+            <developer>
+                <id>werk</id>
+                <name>Michael Werk Ravnsmed</name>
+                <url>https://github.com/werk</url>
+            </developer>
         </developers>

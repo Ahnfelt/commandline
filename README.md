@@ -85,15 +85,15 @@ object EntityTypeParser extends Parser[Boolean] {
 ```
 
 # Posix and GNU compatibility
-Support for combined short names `-xyz`, equivalent to `-x -y -z`.
+Support for `-xyz`, equivalent to `-x -y -z`.
 
-For long names, `=` can be used between the option and the argument, eg. `--foo=bar`.
+Support for `-n10`, equivalent to `-n 10`.
+
+Support for `--foo=bar`, equivalent to `--foo bar`.
 
 After a lone `--`, everything is treated as positional arguments.
 
 A lone `-` is treated as a positional argument.
 
 # To be implemented
-In POSIX, it's possible to give arguments to short options without a separating space, eg. `-n10`. This remains to be implemented.
-
 Currently, environment variables for flags is treated as `true` when defined and `false` otherwise. Perhaps the value should be parsed as a boolean value, ie. `""`, `false`, `no`, `n` or `0` for false and `true`, `yes`, `y` or `1` for true.
