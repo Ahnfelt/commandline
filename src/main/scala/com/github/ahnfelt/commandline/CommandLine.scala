@@ -348,7 +348,7 @@ object CommandLineGenerated {
         val referenceMap = references.flatMap(r => r.parameter.labels.toList.map(_ -> r)).toMap[String, Reference[_]]
         while(remaining.nonEmpty) {
             val argument = remaining.head
-            if(argument == "--") {
+            if(argument == "--" && !dashDash) {
                 dashDash = true
                 remaining = remaining.tail
             } else {
@@ -356,12 +356,12 @@ object CommandLineGenerated {
                     case Some(r) if !dashDash =>
                         if(r.seen) throw CommandLineException("Duplicate parameter: " + argument)
                         remaining = r.consume(remaining, environment)
-                    case None if !dashDash && argument.startsWith("-") =>
+                    case None if !dashDash && argument.startsWith("-") && argument != "-" =>
                         throw CommandLineException("Unknown parameter: " + argument)
                     case _ =>
                         references.find(r => !r.seen && r.parameter.positional) match {
                             case Some(r) =>
-                                val before = remaining.takeWhile(a => !a.startsWith("-") || dashDash)
+                                val before = remaining.takeWhile(a => !a.startsWith("-") || a == "-" || dashDash)
                                 val after = remaining.drop(before.length)
                                 remaining = r.consume(before, environment) ++ after
                             case None =>
