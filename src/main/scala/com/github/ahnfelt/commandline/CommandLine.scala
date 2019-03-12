@@ -20,16 +20,16 @@ object CommandLineExample {
             if(v == "Person") true
             else if(v == "Organization") false
             else throw CommandLineException("Expected " + format + ", got " + v)
-        override def format = "{Person, Organization}"
+        override def format = "<type>"
     }
 
     val commandLine = CommandLine("Process files.",
         optional(LongParser, "-e", "--enhedsnummer"),
-        optional(EntityTypeParser, "-t", "--entitytype", "ENTITY_TYPE"),
+        optional(EntityTypeParser, "-t", "--entitytype", "ENTITYTYPE"),
         branch[Mode](
             "run" -> CommandLine("Run scripts.",
                 optional(StringParser, "-p", "--path"),
-                flag("-v", "--verbose"),
+                flag("-v", "--verbose").help("It's a lot of spam, really."),
                 flag("-r", "--recursive"),
                 requiredList(StringParser, "file"),
             )(RunMode),
@@ -101,11 +101,12 @@ object CommandLine extends CommandLineGenerated {
 
 trait CommandLine[T] { self =>
 
-    def usage : String = "USAGE:\n" + usage(1)
+    def usage : String = usage(0)
 
-    def usage(indentation : Int) : String =
-        help.lines.map("    " * indentation + _ + "\n").mkString +
-            parameterUsage(indentation)
+    def usage(indentation : Int) : String = {
+        val d = help.lines.map("    " * indentation + _ + "\n").mkString
+        (if(d.isEmpty) "" else d + "\n") + parameterUsage(indentation)
+    }
 
     def parameterUsage(indentation : Int) : String
 
@@ -128,7 +129,7 @@ trait CommandLine[T] { self =>
         try {
             arguments match {
                 case Array("-?") =>
-                    println("USAGE: (get help: -?)\n" + usage(1))
+                    println(usage(0))
                     System.exit(0)
                     throw CommandLineException("This never happens.")
                 case Array("-*") =>
@@ -181,8 +182,8 @@ case class DocumentedParameter[T](parameter : Parameter[T], description : String
     override val labels = parameter.labels
     override val completions = parameter.completions
     override def usage(indentation : Int) =
-        parameter.usage(indentation) + "\n" +
-            description.lines.map("    " * (indentation + 1) + _).mkString("\n")
+        parameter.usage(indentation) +
+            description.lines.map("    " * (indentation + 1) + _).mkString("\n") + "\n"
     override def consume(arguments : List[String], environment : Map[String, String]) =
         parameter.consume(arguments, environment)
     override def missing(environment : Map[String, String]) = parameter.missing(environment)
@@ -195,7 +196,7 @@ case class RequiredParameter[T](parser : Parser[T], labelList : List[String]) ex
     val labels = labelList.toSet
     val completions = labels.filter(!_.headOption.exists(_.isUpper))
     def usage(indentation : Int) =
-        "    " * indentation + labels.mkString(", ") + " " + parser.format + " (required)"
+        "    " * indentation + labels.mkString(", ") + " " + parser.format + " (required)" + "\n"
     def consume(arguments : List[String], environment : Map[String, String]) = {
         arguments.drop(1).headOption match {
             case Some(value) => parser.parse(value) -> arguments.drop(2)
@@ -219,7 +220,7 @@ case class OptionalParameter[T](parser : Parser[T], labelList : List[String]) ex
     val labels = labelList.toSet
     val completions = labels.filter(!_.headOption.exists(_.isUpper))
     def usage(indentation : Int) =
-        "    " * indentation + labels.mkString(", ") + " " + parser.format
+        "    " * indentation + labels.mkString(", ") + " " + parser.format + "\n"
     def consume(arguments : List[String], environment : Map[String, String]) = {
         arguments.drop(1).headOption match {
             case Some(value) => Some(parser.parse(value)) -> arguments.drop(2)
@@ -240,7 +241,7 @@ case class FlagParameter(labelList : List[String]) extends Parameter[Boolean] {
     val labels = labelList.toSet
     val completions = labels.filter(!_.headOption.exists(_.isUpper))
     def usage(indentation : Int) =
-        "    " * indentation + labels.mkString(", ")
+        "    " * indentation + labels.mkString(", ") + "\n"
     def consume(arguments : List[String], environment : Map[String, String]) = {
         true -> arguments.drop(1)
     }
@@ -255,7 +256,7 @@ case class OptionalValueParameter[T](parser : Parser[T], name : String) extends 
     val labels = Set()
     val completions = labels
     def usage(indentation : Int) =
-        "    " * indentation + "[" + name + "] " + parser.format
+        "    " * indentation + "[" + name + "]\n"
     def consume(arguments : List[String], environment : Map[String, String]) = {
         Some(parser.parse(arguments.head)) -> arguments.tail
     }
@@ -269,7 +270,7 @@ case class RequiredValueParameter[T](parser : Parser[T], name : String) extends 
     val labels = Set()
     val completions = labels
     def usage(indentation : Int) =
-        "    " * indentation + name + " " + parser.format
+        "    " * indentation + name + "\n"
     def consume(arguments : List[String], environment : Map[String, String]) = {
         parser.parse(arguments.head) -> arguments.tail
     }
@@ -283,8 +284,8 @@ case class MultiValueParameter[T](parser : Parser[T], name : String, nonEmpty : 
     val labels = Set()
     val completions = labels
     def usage(indentation : Int) =
-        if(nonEmpty) "    " * indentation + name + " [...] " + parser.format
-        else "    " * indentation + "[" + name + " ...] " + parser.format
+        if(nonEmpty) "    " * indentation + name + " [...]\n"
+        else "    " * indentation + "[" + name + " ...]\n"
     def consume(arguments : List[String], environment : Map[String, String]) = {
         var remaining = arguments
         var result = List[T]()
@@ -306,7 +307,7 @@ case class BranchParameter[T](branches : List[(String, CommandLine[T])]) extends
     def usage(indentation : Int) =
         branches.map { case (key, value) =>
             "    " * indentation + key + ":\n" + value.usage(indentation + 1)
-        }.mkString("\n")
+        }.mkString("\n") + "\n"
     def consume(arguments : List[String], environment : Map[String, String]) = {
         branches.find(_._1 == arguments.head).get._2.consume(arguments.tail, environment) -> List()
     }
