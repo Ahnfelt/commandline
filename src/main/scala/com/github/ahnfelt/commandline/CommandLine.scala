@@ -129,7 +129,9 @@ trait CommandLine[T] { self =>
         try {
             arguments match {
                 case Array("-?") =>
-                    println(usage(0))
+                    print(usage(0))
+                    println("In addition, -? prints this information and -* prints a list of keywords")
+                    println("suitable for bash completion, eg. complete -D -W \"...\" mycommand.")
                     System.exit(0)
                     throw CommandLineException("This never happens.")
                 case Array("-*") =>
