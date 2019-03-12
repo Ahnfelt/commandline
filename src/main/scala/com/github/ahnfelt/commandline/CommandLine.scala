@@ -58,6 +58,7 @@ object CommandLineExample {
         description : String${xs.map(x => s",\n        p$x : Parameter[T$x]").mkString}
     )(f : (${xs.map(x => s"T$x").mkString(", ")}) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set()${xs.map(x => s" ++ p$x.allLabels").mkString}
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 ${xs.map(x => s"p$x").mkString(", ")}
@@ -107,6 +108,8 @@ trait CommandLine[T] { self =>
 
     def parameterUsage(indentation : Int) : String
 
+    val allLabels : Set[String]
+
     def consume(arguments : List[String], environment : Map[String, String]) : T
 
     def parse(arguments : Array[String], environment : Map[String, String] = env()) : T = {
@@ -133,7 +136,11 @@ trait CommandLine[T] { self =>
         try {
             arguments match {
                 case Array("-?") =>
-                    System.err.println("USAGE: (get help: -?)\n" + usage(1))
+                    println("USAGE: (get help: -?)\n" + usage(1))
+                    System.exit(0)
+                    throw CommandLineException("This never happens.")
+                case Array("-*") =>
+                    println(allLabels.toList.sorted.mkString(" "))
                     System.exit(0)
                     throw CommandLineException("This never happens.")
                 case _ =>
@@ -156,6 +163,7 @@ trait CommandLine[T] { self =>
     def help : String = ""
 
     def help(description : String) : CommandLine[T] = new CommandLine[T] {
+        override val allLabels = self.allLabels
         override def parameterUsage(indentation : Int) = self.parameterUsage(indentation)
         override def consume(arguments : List[String], environment : Map[String, String]) =
             self.consume(arguments, environment)
@@ -167,6 +175,7 @@ trait CommandLine[T] { self =>
 trait Parameter[T] {
     val positional : Boolean
     val labels : Set[String]
+    val allLabels : Set[String]
     def usage(indentation : Int) : String
     def consume(arguments : List[String], environment : Map[String, String]) : (T, List[String])
     def missing(environment : Map[String, String]) : T
@@ -176,6 +185,7 @@ trait Parameter[T] {
 case class DocumentedParameter[T](parameter : Parameter[T], description : String) extends Parameter[T] {
     override val positional = parameter.positional
     override val labels = parameter.labels
+    override val allLabels = parameter.allLabels
     override def usage(indentation : Int) =
         parameter.usage(indentation) + "\n" +
             description.lines.map("    " * (indentation + 1) + _).mkString("\n")
@@ -188,6 +198,7 @@ case class DocumentedParameter[T](parameter : Parameter[T], description : String
 case class RequiredParameter[T](parser : Parser[T], labelList : List[String]) extends Parameter[T] {
     val positional = false
     val labels = labelList.toSet
+    val allLabels = labels.filter(!_.headOption.exists(_.isUpper))
     def usage(indentation : Int) =
         "    " * indentation + labels.mkString(", ") + " " + parser.format + " (required)"
     def consume(arguments : List[String], environment : Map[String, String]) = {
@@ -210,6 +221,7 @@ case class RequiredParameter[T](parser : Parser[T], labelList : List[String]) ex
 case class OptionalParameter[T](parser : Parser[T], labelList : List[String]) extends Parameter[Option[T]] {
     val positional = false
     val labels = labelList.toSet
+    val allLabels = labels.filter(!_.headOption.exists(_.isUpper))
     def usage(indentation : Int) =
         "    " * indentation + labels.mkString(", ") + " " + parser.format
     def consume(arguments : List[String], environment : Map[String, String]) = {
@@ -229,6 +241,7 @@ case class OptionalParameter[T](parser : Parser[T], labelList : List[String]) ex
 case class FlagParameter(labelList : List[String]) extends Parameter[Boolean] {
     val positional = false
     val labels = labelList.toSet
+    val allLabels = labels.filter(!_.headOption.exists(_.isUpper))
     def usage(indentation : Int) =
         "    " * indentation + labels.mkString(", ")
     def consume(arguments : List[String], environment : Map[String, String]) = {
@@ -242,6 +255,7 @@ case class FlagParameter(labelList : List[String]) extends Parameter[Boolean] {
 case class OptionalValueParameter[T](parser : Parser[T], name : String) extends Parameter[Option[T]] {
     val positional = true
     val labels = Set()
+    val allLabels = labels
     def usage(indentation : Int) =
         "    " * indentation + "[" + name + "] " + parser.format
     def consume(arguments : List[String], environment : Map[String, String]) = {
@@ -254,6 +268,7 @@ case class OptionalValueParameter[T](parser : Parser[T], name : String) extends 
 case class RequiredValueParameter[T](parser : Parser[T], name : String) extends Parameter[T] {
     val positional = true
     val labels = Set()
+    val allLabels = labels
     def usage(indentation : Int) =
         "    " * indentation + name + " " + parser.format
     def consume(arguments : List[String], environment : Map[String, String]) = {
@@ -266,6 +281,7 @@ case class RequiredValueParameter[T](parser : Parser[T], name : String) extends 
 case class MultiValueParameter[T](parser : Parser[T], name : String, nonEmpty : Boolean) extends Parameter[List[T]] {
     val positional = true
     val labels = Set()
+    val allLabels = labels
     def usage(indentation : Int) =
         if(nonEmpty) "    " * indentation + name + " [...] " + parser.format
         else "    " * indentation + "[" + name + " ...] " + parser.format
@@ -285,6 +301,7 @@ case class MultiValueParameter[T](parser : Parser[T], name : String, nonEmpty : 
 case class BranchParameter[T](branches : List[(String, CommandLine[T])]) extends Parameter[T] {
     val positional = false
     val labels = branches.map(_._1).toSet
+    val allLabels = labels ++ branches.map(_._2.allLabels).fold(Set())(_ ++ _)
     def usage(indentation : Int) =
         branches.map { case (key, value) =>
             "    " * indentation + key + ":\n" + value.usage(indentation + 1)
@@ -397,6 +414,7 @@ class CommandLineGenerated {
         description : String
     )(f : () => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set()
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
 
@@ -413,6 +431,7 @@ class CommandLineGenerated {
         p1 : Parameter[T1]
     )(f : (T1) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1
@@ -430,6 +449,7 @@ class CommandLineGenerated {
         p2 : Parameter[T2]
     )(f : (T1, T2) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2
@@ -449,6 +469,7 @@ class CommandLineGenerated {
         p3 : Parameter[T3]
     )(f : (T1, T2, T3) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3
@@ -470,6 +491,7 @@ class CommandLineGenerated {
         p4 : Parameter[T4]
     )(f : (T1, T2, T3, T4) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4
@@ -493,6 +515,7 @@ class CommandLineGenerated {
         p5 : Parameter[T5]
     )(f : (T1, T2, T3, T4, T5) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5
@@ -518,6 +541,7 @@ class CommandLineGenerated {
         p6 : Parameter[T6]
     )(f : (T1, T2, T3, T4, T5, T6) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6
@@ -545,6 +569,7 @@ class CommandLineGenerated {
         p7 : Parameter[T7]
     )(f : (T1, T2, T3, T4, T5, T6, T7) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7
@@ -574,6 +599,7 @@ class CommandLineGenerated {
         p8 : Parameter[T8]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8
@@ -605,6 +631,7 @@ class CommandLineGenerated {
         p9 : Parameter[T9]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8, T9) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels ++ p9.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8, p9
@@ -638,6 +665,7 @@ class CommandLineGenerated {
         p10 : Parameter[T10]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels ++ p9.allLabels ++ p10.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8, p9, p10
@@ -673,6 +701,7 @@ class CommandLineGenerated {
         p11 : Parameter[T11]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels ++ p9.allLabels ++ p10.allLabels ++ p11.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11
@@ -710,6 +739,7 @@ class CommandLineGenerated {
         p12 : Parameter[T12]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels ++ p9.allLabels ++ p10.allLabels ++ p11.allLabels ++ p12.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12
@@ -749,6 +779,7 @@ class CommandLineGenerated {
         p13 : Parameter[T13]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels ++ p9.allLabels ++ p10.allLabels ++ p11.allLabels ++ p12.allLabels ++ p13.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13
@@ -790,6 +821,7 @@ class CommandLineGenerated {
         p14 : Parameter[T14]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels ++ p9.allLabels ++ p10.allLabels ++ p11.allLabels ++ p12.allLabels ++ p13.allLabels ++ p14.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14
@@ -833,6 +865,7 @@ class CommandLineGenerated {
         p15 : Parameter[T15]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels ++ p9.allLabels ++ p10.allLabels ++ p11.allLabels ++ p12.allLabels ++ p13.allLabels ++ p14.allLabels ++ p15.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15
@@ -878,6 +911,7 @@ class CommandLineGenerated {
         p16 : Parameter[T16]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels ++ p9.allLabels ++ p10.allLabels ++ p11.allLabels ++ p12.allLabels ++ p13.allLabels ++ p14.allLabels ++ p15.allLabels ++ p16.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16
@@ -925,6 +959,7 @@ class CommandLineGenerated {
         p17 : Parameter[T17]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels ++ p9.allLabels ++ p10.allLabels ++ p11.allLabels ++ p12.allLabels ++ p13.allLabels ++ p14.allLabels ++ p15.allLabels ++ p16.allLabels ++ p17.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17
@@ -974,6 +1009,7 @@ class CommandLineGenerated {
         p18 : Parameter[T18]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels ++ p9.allLabels ++ p10.allLabels ++ p11.allLabels ++ p12.allLabels ++ p13.allLabels ++ p14.allLabels ++ p15.allLabels ++ p16.allLabels ++ p17.allLabels ++ p18.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18
@@ -1025,6 +1061,7 @@ class CommandLineGenerated {
         p19 : Parameter[T19]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels ++ p9.allLabels ++ p10.allLabels ++ p11.allLabels ++ p12.allLabels ++ p13.allLabels ++ p14.allLabels ++ p15.allLabels ++ p16.allLabels ++ p17.allLabels ++ p18.allLabels ++ p19.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19
@@ -1078,6 +1115,7 @@ class CommandLineGenerated {
         p20 : Parameter[T20]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels ++ p9.allLabels ++ p10.allLabels ++ p11.allLabels ++ p12.allLabels ++ p13.allLabels ++ p14.allLabels ++ p15.allLabels ++ p16.allLabels ++ p17.allLabels ++ p18.allLabels ++ p19.allLabels ++ p20.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20
@@ -1133,6 +1171,7 @@ class CommandLineGenerated {
         p21 : Parameter[T21]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels ++ p9.allLabels ++ p10.allLabels ++ p11.allLabels ++ p12.allLabels ++ p13.allLabels ++ p14.allLabels ++ p15.allLabels ++ p16.allLabels ++ p17.allLabels ++ p18.allLabels ++ p19.allLabels ++ p20.allLabels ++ p21.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21
@@ -1190,6 +1229,7 @@ class CommandLineGenerated {
         p22 : Parameter[T22]
     )(f : (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22) => R) = new CommandLine[R] {
         override def help = description
+        override val allLabels = Set() ++ p1.allLabels ++ p2.allLabels ++ p3.allLabels ++ p4.allLabels ++ p5.allLabels ++ p6.allLabels ++ p7.allLabels ++ p8.allLabels ++ p9.allLabels ++ p10.allLabels ++ p11.allLabels ++ p12.allLabels ++ p13.allLabels ++ p14.allLabels ++ p15.allLabels ++ p16.allLabels ++ p17.allLabels ++ p18.allLabels ++ p19.allLabels ++ p20.allLabels ++ p21.allLabels ++ p22.allLabels
         override def parameterUsage(indentation : Int) =
             Seq[Parameter[_]](
                 p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22
