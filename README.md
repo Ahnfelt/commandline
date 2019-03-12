@@ -67,13 +67,11 @@ In addition, -? prints this information and -* prints a list of keywords
 suitable for bash completion, eg. complete -D -W "..." mycommand.
 ```
 
-Work is ongoing to make the above prettier. Perhaps generation of man pages will be added eventually.
-
 # Bash completion for your command line
 
 Use `-*` to print flags, options and commands, suitable for bash completion via `complete -D -W "..." mycommand`:
 ```
---enhedsnummer --entitytype --file --port --recursive --verbose -e -r -t -v report run
+--count --entitytype --file --path --port --recursive --verbose -n -p -r -t -v report run
 ```
 
 # Parse into your own data structures
